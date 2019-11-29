@@ -32,6 +32,7 @@ def train(args):
         print('Epoch:',e)
         # all_targets = []
         # all_predictions = []
+        
         for batch in train_data:
             images = batch[0].to(device)
             labels = batch[2].to(device) #Image at location 2
@@ -41,7 +42,7 @@ def train(args):
             pred = model(images)
             # print(labels[1], pred[1])
             # print('batch', labels.shape, images.shape, pred.shape)
-            
+
             # all_predictions.append(pred.cpu().detach().numpy())
             # print(labels.shape, pred.shape)
             l = loss(pred.cpu(), labels.cpu().float())
