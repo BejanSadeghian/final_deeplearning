@@ -71,20 +71,22 @@ class Classifier(torch.nn.Module):
         """
 
         if self.inference: 
+            device = x.device
             x = x.squeeze()
-            print('forward',x.shape)
+            # print('forward',x.shape)
             if len(x.shape) == 4:
                 images = []
                 for i in x:
-                    img = transforms.functional.to_pil_image(i)
+                    img = transforms.functional.to_pil_image(i.cpu())
                     x = transforms.functional.to_tensor(transforms.Resize((100,130))(img))[None]
                     images.append(x)
                 x = torch.cat(images)
                 # print(x.shape)
             else:
-                img = transforms.functional.to_pil_image(x)
+                img = transforms.functional.to_pil_image(x.cpu())
                 x = transforms.functional.to_tensor(transforms.Resize((100,130))(img))
-        print('forward', x.shape)
+            x.to(device)
+        # print('forward', x.shape)
         if self.normalize:
             x = (x - self.mean[None, :, None, None].to(x.device)) / self.std[None, :, None, None].to(x.device)
         

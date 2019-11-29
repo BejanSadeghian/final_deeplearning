@@ -32,7 +32,7 @@ def train(args):
         print('Epoch:',e)
         # all_targets = []
         # all_predictions = []
-        
+
         for batch in train_data:
             images = batch[0].to(device)
             labels = batch[2].to(device) #Image at location 2
