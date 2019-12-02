@@ -107,14 +107,14 @@ def train(args):
         x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
         train_logger.add_image('Heatmap_Sigmoid1_valid',x, global_step=e)
         
-        im = sample_valid_image1[0].unsqueeze(0)
+        im = sample_valid_image1[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original2_valid',im.cpu(), global_step=e)
         x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
         train_logger.add_image('Heatmap_Sigmoid2_valid',x, global_step=e)
         
-        im = sample_valid_image2[0].unsqueeze(0)
+        im = sample_valid_image2[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original3_valid',im.cpu(), global_step=e)
