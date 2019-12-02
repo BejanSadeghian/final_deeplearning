@@ -36,10 +36,25 @@ def train(args):
     sample_valid_image1 = valid_dataset[423]
     sample_valid_image2 = valid_dataset[473]
 
-
+    #Logger
     if args.logdir is not None:
         train_logger = tb.SummaryWriter(log_dir=os.path.join(args.logdir, 'train_{}'.format(args.log_suffix)), flush_secs=1)
         valid_logger = tb.SummaryWriter(log_dir=os.path.join(args.logdir, 'valid_{}'.format(args.log_suffix)), flush_secs=1)
+
+
+
+
+    im = sample_valid_image0[0]
+    im_s = im.unsqueeze(0)
+    print(im.shape)
+    heatmap = model(im.to(device))
+    heatmap = heatmap.squeeze(0)
+    train_logger.add_image('Original1_valid',im.cpu(), global_step=1)
+    # train_logger.add_image('Heatmap1_valid',heatmap.cpu(), global_step=e)
+    train_logger.add_image('Heatmap_Sigmoid1_valid',torch.sigmoid(heatmap.cpu()), global_step=1)
+
+
+    
 
     global_step = 0
     for e in range(args.epochs):
@@ -67,44 +82,44 @@ def train(args):
         heatmap = model(im.to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original0',sample_image0[0].cpu(), global_step=e)
-        # train_logger.add_image('Heatmap0',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid0',torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(1), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid0',x, global_step=e)
 
         im = sample_image1[0].unsqueeze(0)
         heatmap = model(im.to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original1',sample_image1[0].cpu(), global_step=e)
-        # train_logger.add_image('Heatmap1',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid1',torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(1), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid1',x, global_step=e)
 
         im = sample_image2[0].unsqueeze(0)
         heatmap = model(im.to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original2',sample_image2[0].cpu(), global_step=e)
-        # train_logger.add_image('Heatmap2',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid2v',torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(1), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid2v',x, global_step=e)
 
         ##Valid images
-        im = sample_valid_image0[0].unsqueeze(0)
-        heatmap = model(im.to(device))
+        im = sample_valid_image0[0]
+        heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original1_valid',im.cpu(), global_step=e)
-        # train_logger.add_image('Heatmap1_valid',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid1_valid',torch.sigmoid(heatmap.cpu()), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid1_valid',x, global_step=e)
         
         im = sample_valid_image1[0].unsqueeze(0)
-        heatmap = model(im.to(device))
+        heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original2_valid',im.cpu(), global_step=e)
-        # train_logger.add_image('Heatmap2_valid',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid2_valid',torch.sigmoid(heatmap.cpu()), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid2_valid',x, global_step=e)
         
         im = sample_valid_image2[0].unsqueeze(0)
-        heatmap = model(im.to(device))
+        heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
         train_logger.add_image('Original3_valid',im.cpu(), global_step=e)
-        # train_logger.add_image('Heatmap3_valid',heatmap.cpu(), global_step=e)
-        train_logger.add_image('Heatmap_Sigmoid3_valid',torch.sigmoid(heatmap.cpu()), global_step=e)
+        x = ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices * 255)[None]
+        train_logger.add_image('Heatmap_Sigmoid3_valid',x, global_step=e)
 
         save_vision_model(model)
 
