@@ -161,11 +161,11 @@ class VisionData(torch.utils.data.DataLoader):
                 tgt[tgt == c] = 0
         tgt[tgt != 0] = -1
         tgt += 1
-        output_target.append(torch.tensor(tgt, dtype=torch.long)[None])
+        output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
         for c in self.classes:
             tgt_temp = np.zeros(tgt_classes.shape)
             tgt_temp[tgt_classes == c] = 1
-            output_target.append(torch.tensor(tgt_temp, dtype=torch.long)[None])
+            output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
 
         tgt = torch.cat(output_target)
         image_to_tensor = transforms.ToTensor()
