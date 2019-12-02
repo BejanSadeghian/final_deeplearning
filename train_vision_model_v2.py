@@ -21,7 +21,7 @@ def train(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     train_data = load_vision_data(args.train_path, batch_size=args.batch_size)
-    valid_data = load_data(args.valid_path, batch_size=args.batch_size)
+    valid_data = load_vision_data(args.valid_path, batch_size=args.batch_size)
 
     #Sample image
     train_dataset = VisionData(args.train_path)
