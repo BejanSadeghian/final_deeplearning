@@ -176,7 +176,7 @@ class VisionData(torch.utils.data.DataLoader):
 
         tgt = transforms.functional.to_pil_image(tgt.cpu())
         tgt = transforms.functional.to_tensor(transforms.Resize((100,130))(tgt))
-        return (img, tgt)
+        return (img, tgt.long())
 
 def load_data(path_to_data, batch_size=64):
     d = AgentData(path_to_data)
