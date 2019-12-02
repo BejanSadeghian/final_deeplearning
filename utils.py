@@ -156,18 +156,22 @@ class VisionData(torch.utils.data.DataLoader):
         tgt = np.loadtxt(os.path.join(self.dataset_path, targets), dtype=int)
         tgt_classes = tgt.copy()
         output_target = []
-        for c in self.class_range:
+        for ix, c in enumerate(self.class_range):
             if c not in self.classes:
                 tgt[tgt == c] = 0
-        tgt[tgt != 0] = -1
-        tgt += 1
-        output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
-        for c in self.classes:
-            tgt_temp = np.zeros(tgt_classes.shape)
-            tgt_temp[tgt_classes == c] = 1
-            output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
+            else:
+                tgt[tgt == c] = ix + 1
+        
+        # tgt[tgt != 0] = -1
+        # tgt += 1
+        # output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
+        # for c in self.classes:
+        #     tgt_temp = np.zeros(tgt_classes.shape)
+        #     tgt_temp[tgt_classes == c] = 1
+        #     output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
 
-        tgt = torch.cat(output_target)
+        # tgt = torch.cat(output_target)
+        tgt = torch.tensor(tgt, dtype=torch.float)
         image_to_tensor = transforms.ToTensor()
         img = image_to_tensor(img)
 
@@ -176,6 +180,7 @@ class VisionData(torch.utils.data.DataLoader):
 
         tgt = transforms.functional.to_pil_image(tgt.cpu())
         tgt = transforms.functional.to_tensor(transforms.Resize((100,130))(tgt))
+        tgt.squeeze_(0)
         return (img, tgt.long())
 
 def load_data(path_to_data, batch_size=64):
