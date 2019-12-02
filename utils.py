@@ -171,23 +171,12 @@ class VisionData(torch.utils.data.DataLoader):
         image_to_tensor = transforms.ToTensor()
         img = image_to_tensor(img)
 
-        return (img, tgt)
+        img = transforms.functional.to_pil_image(img.cpu())
+        img = transforms.functional.to_tensor(transforms.Resize((100,130))(img))
 
-# def draw_data(mat_shape, yolo, min_val=5):
-#     mat = np.zeros(mat_shape)
-#     mat_y, mat_x = mat_shape
-#     x = int(yolo[1] * mat_x)
-#     y = int(yolo[2] * mat_y)
-#     w = int(yolo[3] * mat_x) if int(yolo[3] * mat_x) > min_val else min_val 
-#     h = int(yolo[4] * mat_y) if int(yolo[4] * mat_y) > min_val else min_val
-#     w = w if w%2 == 0 else w + 1
-#     h = h if h%2 == 0 else h + 1
-    
-#     # overlay = np.ones((h,w))
-#     # overlay_crop = mat[int(max(y-(h/2), 0)) : int(min(y+(h/2), mat_y)), int(max(x-(w/2), 0)) : int(min(x+(w/2), mat_x))].shape
-#     # overlay = overlay[:overlay_crop[0], :overlay_crop[1]]
-#     mat[int(max(y-(h/2), 0)) : int(min(y+(h/2), mat_y)), int(max(x-(w/2), 0)) : int(min(x+(w/2), mat_x))] = 1.0
-#     return torch.tensor(mat, dtype=torch.float)
+        tgt = transforms.functional.to_pil_image(tgt.cpu())
+        tgt = transforms.functional.to_tensor(transforms.Resize((100,130))(tgt))
+        return (img, tgt)
 
 def load_data(path_to_data, batch_size=64):
     d = AgentData(path_to_data)
@@ -204,18 +193,3 @@ def load_classifier_data(path_to_data, batch_size=64):
 if __name__ == '__main__':
     data = VisionData('/Users/bsadeghian/Documents/UTCS/Deep Learning/final_deeplearning/vision_data', recalc_norm=False)
     print(data[3])
-
-    #TODO:
-    #[o] calculate norm
-    #[] validate that vision data loader is working
-    #[] validate that training script is working
-    #[] change loader to classify only kart and projectile
-
-
-    # import matplotlib.pyplot as plt
-    # print(data[0][2])
-    # plt.imshow(data[0][2].numpy())
-    # mat = np.zeros((10,10))
-    # yolo = [1, 0.2, 0.2, 5, 5]
-    # print(mat)
-    # print(draw_data(mat, yolo))
