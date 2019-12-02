@@ -162,6 +162,12 @@ class VisionData(torch.utils.data.DataLoader):
             else:
                 tgt[tgt == c] = ix + 1
         
+        tgt = torch.tensor(tgt, dtype=torch.float)
+
+        # ## For BCE Loss
+        # for ix, c in enumerate(self.class_range):
+        #     if c not in self.classes:
+        #         tgt[tgt == c] = 0
         # tgt[tgt != 0] = -1
         # tgt += 1
         # output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
@@ -169,9 +175,8 @@ class VisionData(torch.utils.data.DataLoader):
         #     tgt_temp = np.zeros(tgt_classes.shape)
         #     tgt_temp[tgt_classes == c] = 1
         #     output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
-
         # tgt = torch.cat(output_target)
-        tgt = torch.tensor(tgt, dtype=torch.float)
+        
         image_to_tensor = transforms.ToTensor()
         img = image_to_tensor(img)
 
