@@ -45,7 +45,7 @@ def train(args):
     for e in range(args.epochs):
         model.train(True)
         for bix, batch in enumerate(train_data):
-            print('\rEpoch: {}; Batch: {}'.format(e,bix), end='\r')
+            print('Epoch: {}; Batch: {}'.format(e,bix))
             images = batch[0].to(device)
             labels = batch[1].to(device) 
 
