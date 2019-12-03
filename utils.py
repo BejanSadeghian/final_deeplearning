@@ -7,6 +7,8 @@ from PIL import Image
 from torchvision import transforms
 import re
 
+CLASSES = [1,8]
+
 class AgentData(torch.utils.data.DataLoader):
 
     def __init__(self, dataset_path, norm=False, recalc_norm=False, resize=(130,100)):
@@ -124,7 +126,7 @@ class ClassifierData(torch.utils.data.DataLoader):
 
 class VisionData(torch.utils.data.DataLoader):
 
-    def __init__(self, dataset_path, norm=False, recalc_norm=False, resize=(130,100), classes = [1,8]):
+    def __init__(self, dataset_path, norm=False, recalc_norm=False, resize=(130,100), classes = CLASSES):
         #Norm handled in model but calculated here
         self.norm = norm
         self.dataset_path = dataset_path
@@ -154,28 +156,13 @@ class VisionData(torch.utils.data.DataLoader):
         targets = self.ids[idx] + '.txt'
         img = Image.open(os.path.join(self.dataset_path, image))
         tgt = np.loadtxt(os.path.join(self.dataset_path, targets), dtype=int)
-        tgt_classes = tgt.copy()
-        output_target = []
+        count = 1
         for ix, c in enumerate(self.class_range):
             if c not in self.classes:
                 tgt[tgt == c] = 0
-            else:
-                tgt[tgt == c] = ix + 1
         
         tgt = torch.tensor(tgt, dtype=torch.float)
-
-        # ## For BCE Loss
-        # for ix, c in enumerate(self.class_range):
-        #     if c not in self.classes:
-        #         tgt[tgt == c] = 0
-        # tgt[tgt != 0] = -1
-        # tgt += 1
-        # output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
-        # for c in self.classes:
-        #     tgt_temp = np.zeros(tgt_classes.shape)
-        #     tgt_temp[tgt_classes == c] = 1
-        #     output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
-        # tgt = torch.cat(output_target)
+        tgt = to_multi_channel(tgt, classes=CLASSES)
         
         image_to_tensor = transforms.ToTensor()
         img = image_to_tensor(img)
@@ -186,7 +173,49 @@ class VisionData(torch.utils.data.DataLoader):
         tgt = transforms.functional.to_pil_image(tgt.cpu())
         tgt = transforms.functional.to_tensor(transforms.Resize((100,130))(tgt))
         tgt.squeeze_(0)
+        
+        # for d in tgt:
+        #     print(torch.round(d).sum())
+        tgt = to_single_channel(tgt)
+
         return (img, tgt.long())
+
+def to_single_channel(heatmap):
+    heatmap = heatmap.float()
+    return ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices)
+
+def to_multi_channel(heatmap, class_range=list(range(1,10)), classes = None):
+    """
+    heatmap shape (C,H,W)
+    """    
+    ## For BCE Loss
+    heatmap = heatmap.float()
+    # print(np.unique(heatmap.detach().numpy()))
+    if len(heatmap.shape) == 3:
+        tgt = to_single_channel(heatmap)
+    else:
+        tgt = heatmap.clone()
+    output_target = []
+    tgt = tgt.detach().cpu().float().numpy()
+
+    tgt_classes = tgt.copy()
+    if classes is not None:
+        for ix, c in enumerate(class_range):
+            if c not in classes:
+                tgt[tgt == float(c)] = 0
+        tgt[tgt != 0] = -1
+        tgt += 1
+        output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
+    else:
+        classes = list(range(len(CLASSES)+1))
+
+    for c in classes:
+        tgt_temp = np.zeros(tgt_classes.shape)
+        tgt_temp[tgt_classes == float(c)] = 1
+        output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
+
+    tgt = torch.cat(output_target)
+    return tgt
 
 def load_data(path_to_data, batch_size=64):
     d = AgentData(path_to_data)
