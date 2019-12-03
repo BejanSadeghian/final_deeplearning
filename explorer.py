@@ -5,7 +5,7 @@ import numpy as np
 import pystk
 import PIL.Image
 
-def rollout(epoch, max_roll=1000, skip=5, n_players=4, save='vision_data_valid'):
+def rollout(epoch, max_roll=1000, skip=5, n_players=4, save='vision_data_temp'):
     race_config = pystk.RaceConfig(track='icy_soccer_field', mode=pystk.RaceConfig.RaceMode.SOCCER)
     race_config.players.pop()
 
@@ -43,5 +43,5 @@ if __name__ == '__main__':
     config.screen_height = 300
     pystk.init(config)
 
-    for e in range(1):
+    for e in range(3):
         rollout(e)
