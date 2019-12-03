@@ -110,23 +110,23 @@ def train(args):
         im = sample_valid_image0[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Original_1',im.cpu(), global_step=e)
+        valid_logger.add_image('Original_1',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Pred_1',x, global_step=e)
+        valid_logger.add_image('Pred_1',x, global_step=e)
         
         im = sample_valid_image1[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Original_2',im.cpu(), global_step=e)
+        valid_logger.add_image('Original_2',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Pred_2',x, global_step=e)
+        valid_logger.add_image('Pred_2',x, global_step=e)
         
         im = sample_valid_image2[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Original_3',im.cpu(), global_step=e)
+        valid_logger.add_image('Original_3',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Pred_3',x, global_step=e)
+        valid_logger.add_image('Pred_3',x, global_step=e)
 
         save_vision_model(model)
 
