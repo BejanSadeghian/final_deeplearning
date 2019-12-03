@@ -59,8 +59,8 @@ def train(args):
     for e in range(args.epochs):
         model.train(True)
         for bix, batch in enumerate(train_data):
-            if bix > 10:
-                 break
+            # if bix > 10:
+            #      break
             
             print('Epoch: {}; Batch: {}'.format(e,bix))
             images = batch[0].to(device)
