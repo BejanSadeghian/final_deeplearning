@@ -17,7 +17,7 @@ def train(args):
 
     # loss = torch.nn.MSELoss()
     # loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([1]))
-    loss = torch.nn.CrossEntropyLoss(torch.tensor([1,10,100], dtype=torch.float))
+    loss = torch.nn.CrossEntropyLoss(torch.tensor([1,10,1000], dtype=torch.float))
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     train_data = load_vision_data(args.train_path, batch_size=args.batch_size)
@@ -80,6 +80,8 @@ def train(args):
             global_step += 1
             
         model.eval()
+        model.train(False)
+        ##Train Images
         im = sample_image0[0].unsqueeze(0)
         heatmap = model(im.to(device))
         heatmap = heatmap.squeeze(0)
@@ -108,23 +110,23 @@ def train(args):
         im = sample_valid_image0[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Valid_Original_1',im.cpu(), global_step=e)
+        train_logger.add_image('Original_1',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Valid_Pred_1',x, global_step=e)
+        train_logger.add_image('Pred_1',x, global_step=e)
         
         im = sample_valid_image1[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Valid_Original_2',im.cpu(), global_step=e)
+        train_logger.add_image('Original_2',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Valid_Pred_2',x, global_step=e)
+        train_logger.add_image('Pred_2',x, global_step=e)
         
         im = sample_valid_image2[0]
         heatmap = model(im.unsqueeze(0).to(device))
         heatmap = heatmap.squeeze(0)
-        train_logger.add_image('Valid_Original_3',im.cpu(), global_step=e)
+        train_logger.add_image('Original_3',im.cpu(), global_step=e)
         x = to_multi_channel(heatmap)
-        train_logger.add_image('Valid_Pred_3',x, global_step=e)
+        train_logger.add_image('Pred_3',x, global_step=e)
 
         save_vision_model(model)
 
