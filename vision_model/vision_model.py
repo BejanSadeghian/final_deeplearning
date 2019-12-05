@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
+import numpy as np
 
 class Vision(torch.nn.Module):
     
@@ -34,14 +35,21 @@ class Vision(torch.nn.Module):
         def forward(self, x, output_pad=False):
             return F.relu(self.upsample(x))
             
-    def __init__(self, layers=[32,32,64,64,128,128], normalize=True, inference=True):
+    def __init__(self, layers=[32,32,64,64,128,128], normalize=True, inference=True, classes=[1,8]):
         super().__init__()
 
         """
         Your code here
         """
+        self.CLASSES = classes
         self.normalize = normalize
         self.inference = inference
+        self.resize = (100,130)
+        self.puck_layer = classes.index(8) + 1 #Other group is 0 so we add +1
+        print('Puck Layer found at {}'.format(self.puck_layer))
+        print('Forward Pass Auto Resize Image: {}, {}'.format(self.normalize, self.resize))
+        print('Forward Pass Auto Normalize Image: {}'.format(self.normalize))
+
         self.mean = torch.tensor([8.9478, 8.9478, 8.9478], dtype=torch.float) 
         self.std = torch.tensor([47.0021, 42.1596, 39.2562], dtype=torch.float)
 
@@ -69,7 +77,7 @@ class Vision(torch.nn.Module):
         return (B,2)
         """
         ##Add preprocessing
-        if self.inference and False:
+        if self.inference:
             # print('inference')
             device = x.device
             x = x.squeeze()
@@ -77,12 +85,12 @@ class Vision(torch.nn.Module):
                 images = []
                 for i in x:
                     img = transforms.functional.to_pil_image(i.cpu())
-                    x = transforms.functional.to_tensor(transforms.Resize((100,130))(img))
+                    x = transforms.functional.to_tensor(transforms.Resize(self.resize)(img))
                     images.append(x[None].to(device))
                 x = torch.cat(images)
             else:
                 img = transforms.functional.to_pil_image(x.cpu())
-                x = transforms.functional.to_tensor(transforms.Resize((100,130))(img))
+                x = transforms.functional.to_tensor(transforms.Resize(self.resize)(img))
                 x = x[None].to(device)
 
         if self.normalize:
@@ -98,7 +106,82 @@ class Vision(torch.nn.Module):
             x = torch.cat([z[:,:, :activations[-2-i].size(2), :activations[-2-i].size(3)], activations[-2-i]], dim=1)
             z = layer(x)
         return self.classifier(z)
-        # return self.classifier(z.mean([2,3]))
+
+    def to_multi_channel(self, heatmap, class_range=list(range(1,10)), classes = None):
+        """
+        heatmap shape (C,H,W)
+        """    
+        def to_single_channel(heatmap):
+            heatmap = heatmap.float()
+            return ((torch.exp(heatmap.cpu()) / torch.exp(heatmap.cpu()).sum(0)).max(0).indices)
+
+        ## For BCE Loss
+        heatmap = heatmap.float()
+        if len(heatmap.shape) == 3:
+            tgt = to_single_channel(heatmap)
+        else:
+            tgt = heatmap.clone()
+        output_target = []
+        tgt = tgt.detach().cpu().float().numpy()
+
+        tgt_classes = tgt.copy()
+        if classes is not None:
+            for ix, c in enumerate(class_range):
+                if c not in classes:
+                    tgt[tgt == float(c)] = 0
+            tgt[tgt != 0] = -1
+            tgt += 1
+            output_target.append(torch.tensor(tgt, dtype=torch.float)[None])
+        else:
+            classes = list(range(len(self.CLASSES)+1))
+
+        for c in classes:
+            tgt_temp = np.zeros(tgt_classes.shape)
+            tgt_temp[tgt_classes == float(c)] = 1
+            output_target.append(torch.tensor(tgt_temp, dtype=torch.float)[None])
+
+        tgt = torch.cat(output_target)
+        return tgt
+
+    def extract_peak(self, heatmap, max_pool_ks=7, min_score=0.4, max_det=100):
+        """
+        Your code here.
+        Extract local maxima (peaks) in a 2d heatmap.
+        @heatmap: H x W heatmap containing peaks (similar to your training heatmap)
+        @max_pool_ks: Only return points that are larger than a max_pool_ks x max_pool_ks window around the point
+        @min_score: Only return peaks greater than min_score
+        @return: List of peaks [(score, cx, cy), ...], where cx, cy are the position of a peak and score is the
+                    heatmap value at the peak. Return no more than max_det peaks per image
+        """
+        min_avg = min_score / max_pool_ks #normalize to size of the kernel
+        H,W = heatmap.size()
+
+        avg_map = F.avg_pool2d(heatmap[None,None], kernel_size=max_pool_ks, stride=1, padding=max_pool_ks//2)
+        avg_map.squeeze_()
+        if avg_map.max().item() > min_avg:
+            arg_max_map = avg_map.argmax()
+            y = arg_max_map // avg_map.shape[1]
+            x = arg_max_map % avg_map.shape[1]
+            return(True,y.item(),x.item())
+        else:
+            return(False,None,None)
+
+    def detect(self, heatmap, sigmoid=True):
+        """
+           Your code here.
+           Implement object detection here.
+           @image: 3 x H x W image
+           @return: List of detections [(class_id, score, cx, cy), ...],
+                    return no more than 100 detections per image
+           Hint: Use extract_peak here
+        """
+        heatmap.squeeze_(0)
+        if sigmoid:
+            heatmap = self.to_multi_channel(heatmap)
+        max_vals = heatmap[self.puck_layer,:,:]      
+        ultimate_res = self.extract_peak(max_vals, max_pool_ks=15) 
+        
+        return ultimate_res
 
 def save_vision_model(model, name='vision'):
     from torch import save
@@ -115,5 +198,4 @@ def load_vision_model(name='vision'):
     r.load_state_dict(load(path.join(path.dirname(path.abspath(__file__)), '{}.th'.format(name)), map_location='cpu'))
     return r
 
-if __name__ == '__main__':
-    model = Action()
+    
